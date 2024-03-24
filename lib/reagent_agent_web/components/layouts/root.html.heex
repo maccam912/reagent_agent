@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" class="[scrollbar-gutter:stable]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title suffix=" · Phoenix Framework">
+      <%= assigns[:page_title] || "ReagentAgent" %>
+    </.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+  </head>
+  <body class="bg-white antialiased">
+    <header class="bg-gray-800 text-white p-4">
+      <nav class="container mx-auto flex justify-between items-center">
+        <a href="/" class="text-xl font-semibold">Reagent Agent</a>
+        <div class="flex gap-4">
+          <a href="/reports" class="hover:text-gray-300">Reports</a>
+          <a href="/orders" class="hover:text-gray-300">Orders</a>
+          <a href="/transfers" class="hover:text-gray-300">Transfers</a>
+          <a href="/sites" class="hover:text-gray-300">Sites</a>
+          <a href="/lots" class="hover:text-gray-300">Lots</a>
+        </div>
+      </nav>
+    </header>
+    <%= @inner_content %>
+  </body>
+</html>

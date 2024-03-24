@@ -1,0 +1,30 @@
+<.header>
+  Transfer <%= @transfer.id %>
+  <:subtitle>This is a transfer record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/transfers/#{@transfer}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit transfer</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Date"><%= @transfer.date %></:item>
+  <:item title="Count"><%= @transfer.count %></:item>
+  <:item title="From"><%= @transfer.from.name %></:item>
+  <:item title="To"><%= @transfer.to.name %></:item>
+  <:item title="Lot"><%= @order.lot.lot_number <> " - " <> @order.lot.reagent %></:item>
+</.list>
+
+<.back navigate={~p"/transfers"}>Back to transfers</.back>
+
+<.modal :if={@live_action == :edit} id="transfer-modal" show on_cancel={JS.patch(~p"/transfers/#{@transfer}")}>
+  <.live_component
+    module={ReagentAgentWeb.TransferLive.FormComponent}
+    id={@transfer.id}
+    title={@page_title}
+    action={@live_action}
+    transfer={@transfer}
+    patch={~p"/transfers/#{@transfer}"}
+  />
+</.modal>

@@ -1,0 +1,119 @@
+<.header>
+  Matrix of Sites and Lots
+</.header>
+
+<%= unless Enum.empty?(@depletion_warnings) do %>
+<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+  <p class="font-bold">Attention</p>
+  <p>Urgent review needed for the following site and lot combinations due to risk of running out before the next order arrives:</p>
+  <ul>
+    <%= for {site_name, lot_info} <- @depletion_warnings do %>
+      <li><%= "#{site_name}: #{lot_info}" %></li>
+    <% end %>
+  </ul>
+</div>
+<% end %>
+
+<!-- Most Recent Count -->
+<h2 class="text-lg leading-6 font-medium text-gray-900">Most Recent Count</h2>
+<table class="min-w-full divide-y divide-gray-200 mt-4">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+      <%= for site <- @sites do %>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= site.name %></th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <%= for lot <- @lots do %>
+      <tr>
+        <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= lot.reagent <> " - " <> lot.lot_number %></td>
+        <%= for site <- @sites do %>
+          <% count = Map.get(@counts, {site.id, lot.id}, %{})[:remaining_boxes] || 0 %>
+          <td class="px-6 py-4 whitespace-nowrap"><%= count %></td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<!-- Usage Per Day -->
+<h2 class="text-lg leading-6 font-medium text-gray-900">Usage Per Day</h2>
+<table class="min-w-full divide-y divide-gray-200 mt-4">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+      <%= for site <- @sites do %>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= site.name %></th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <%= for lot <- @lots do %>
+      <tr>
+        <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= lot.reagent <> " - " <> lot.lot_number %></td>
+        <%= for site <- @sites do %>
+          <% usage_per_day = Map.get(@counts, {site.id, lot.id}, %{})[:average_usage_per_day] || 0 %>
+          <td class="px-6 py-4 whitespace-nowrap"><%= Float.round(usage_per_day, 2) %></td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<!-- Days Until Depletion -->
+<h2 class="text-lg leading-6 font-medium text-gray-900">Days Until Depletion</h2>
+<table class="min-w-full divide-y divide-gray-200 mt-4">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+      <%= for site <- @sites do %>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= site.name %></th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <%= for lot <- @lots do %>
+      <tr>
+        <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= lot.reagent <> " - " <> lot.lot_number %></td>
+        <%= for site <- @sites do %>
+          <% count_data = Map.get(@counts, {site.id, lot.id}, %{}) %>
+          <% days_until_depletion = count_data[:days_left] || "N/A" %>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <%= if is_number(days_until_depletion), do: Float.round(days_until_depletion, 2), else: days_until_depletion %>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<!-- Days Until Next Order Arrives -->
+<h2 class="text-lg leading-6 font-medium text-gray-900 mt-8">Days Until Next Order Arrives</h2>
+<table class="min-w-full divide-y divide-gray-200 mt-4">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+      <%= for site <- @sites do %>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= site.name %></th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <%= for lot <- @lots do %>
+      <tr>
+        <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= lot.reagent <> " - " <> lot.lot_number %></td>
+        <%= for site <- @sites do %>
+          <% days_until_next_order = Map.get(@counts, {site.id, lot.id}, %{})[:days_until_next_order] || "N/A" %>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <%= case days_until_next_order do
+              :unknown -> "Unknown"
+              _ -> days_until_next_order
+            end %>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

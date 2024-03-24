@@ -1,0 +1,29 @@
+<.header>
+  Report <%= @report.id %>
+  <:subtitle>This is a report record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/reports/#{@report}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit report</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Date"><%= @report.date %></:item>
+  <:item title="Count"><%= @report.count %></:item>
+  <:item title="Lot"><%= @report.lot.lot_number <> " - " <> @report.lot.reagent %></:item> <!-- Assuming the lot has a name field -->
+  <:item title="Site"><%= @report.site.name %></:item> <!-- Assuming the site has a name field -->
+</.list>
+
+<.back navigate={~p"/reports"}>Back to reports</.back>
+
+<.modal :if={@live_action == :edit} id="report-modal" show on_cancel={JS.patch(~p"/reports/#{@report}")}>
+  <.live_component
+    module={ReagentAgentWeb.ReportLive.FormComponent}
+    id={@report.id}
+    title={@page_title}
+    action={@live_action}
+    report={@report}
+    patch={~p"/reports/#{@report}"}
+  />
+</.modal>

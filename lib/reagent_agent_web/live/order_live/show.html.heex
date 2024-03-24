@@ -1,0 +1,29 @@
+<.header>
+  Order <%= @order.id %>
+  <:subtitle>This is a order record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/orders/#{@order.id}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit order</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Date"><%= @order.date %></:item>
+  <:item title="Count"><%= @order.count %></:item>
+  <:item title="Lot"><%= @order.lot.lot_number <> " - " <> @order.lot.reagent %></:item> <!-- Assuming the lot has a name field -->
+  <:item title="Site"><%= @order.site.name %></:item> <!-- Assuming the site has a name field -->
+</.list>
+
+<.back navigate={~p"/orders"}>Back to orders</.back>
+
+<.modal :if={@live_action == :edit} id="order-modal" show on_cancel={JS.patch(~p"/orders/#{@order.id}")}>
+  <.live_component
+    module={ReagentAgentWeb.OrderLive.FormComponent}
+    id={@order.id}
+    title={@page_title}
+    action={@live_action}
+    order={@order}
+    patch={~p"/orders/#{@order.id}"}
+  />
+</.modal>

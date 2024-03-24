@@ -1,0 +1,45 @@
+<.header>
+  Listing Transfers
+  <:actions>
+    <.link patch={~p"/transfers/new"}>
+      <.button>New Transfer</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="transfers"
+  rows={@streams.transfers}
+  row_click={fn {_id, transfer} -> JS.navigate(~p"/transfers/#{transfer}") end}
+>
+  <:col :let={{_id, transfer}} label="Count"><%= transfer.count %></:col>
+  <:col :let={{_id, transfer}} label="Date"><%= transfer.date %></:col>
+  <:col :let={{_id, transfer}} label="From"><%= transfer.from.name %></:col>
+  <:col :let={{_id, transfer}} label="To"><%= transfer.to.name %></:col>
+  <:col :let={{_id, transfer}} label="Lot"><%= transfer.lot.lot_number <> " - " <> transfer.lot.reagent %></:col>
+  <:action :let={{_id, transfer}}>
+    <div class="sr-only">
+      <.link navigate={~p"/transfers/#{transfer}"}>Show</.link>
+    </div>
+    <.link patch={~p"/transfers/#{transfer}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, transfer}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: transfer.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="transfer-modal" show on_cancel={JS.patch(~p"/transfers")}>
+  <.live_component
+    module={ReagentAgentWeb.TransferLive.FormComponent}
+    id={@transfer.id || :new}
+    title={@page_title}
+    action={@live_action}
+    transfer={@transfer}
+    patch={~p"/transfers"}
+  />
+</.modal>

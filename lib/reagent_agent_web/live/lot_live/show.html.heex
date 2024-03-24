@@ -1,0 +1,27 @@
+<.header>
+  Lot <%= @lot.id %>
+  <:subtitle>This is a lot record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/lots/#{@lot}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit lot</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Lot number"><%= @lot.lot_number %></:item>
+  <:item title="Reagent"><%= @lot.reagent %></:item>
+</.list>
+
+<.back navigate={~p"/lots"}>Back to lots</.back>
+
+<.modal :if={@live_action == :edit} id="lot-modal" show on_cancel={JS.patch(~p"/lots/#{@lot}")}>
+  <.live_component
+    module={ReagentAgentWeb.LotLive.FormComponent}
+    id={@lot.id}
+    title={@page_title}
+    action={@live_action}
+    lot={@lot}
+    patch={~p"/lots/#{@lot}"}
+  />
+</.modal>

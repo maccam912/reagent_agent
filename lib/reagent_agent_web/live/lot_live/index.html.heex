@@ -1,0 +1,42 @@
+<.header>
+  Listing Lots
+  <:actions>
+    <.link patch={~p"/lots/new"}>
+      <.button>New Lot</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="lots"
+  rows={@streams.lots}
+  row_click={fn {_id, lot} -> JS.navigate(~p"/lots/#{lot}") end}
+>
+  <:col :let={{_id, lot}} label="Lot number"><%= lot.lot_number %></:col>
+  <:col :let={{_id, lot}} label="Reagent"><%= lot.reagent %></:col>
+  <:action :let={{_id, lot}}>
+    <div class="sr-only">
+      <.link navigate={~p"/lots/#{lot}"}>Show</.link>
+    </div>
+    <.link patch={~p"/lots/#{lot}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, lot}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: lot.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="lot-modal" show on_cancel={JS.patch(~p"/lots")}>
+  <.live_component
+    module={ReagentAgentWeb.LotLive.FormComponent}
+    id={@lot.id || :new}
+    title={@page_title}
+    action={@live_action}
+    lot={@lot}
+    patch={~p"/lots"}
+  />
+</.modal>

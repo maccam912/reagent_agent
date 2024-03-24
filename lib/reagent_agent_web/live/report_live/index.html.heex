@@ -1,0 +1,44 @@
+<.header>
+  Listing Reports
+  <:actions>
+    <.link patch={~p"/reports/new"}>
+      <.button>New Report</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="reports"
+  rows={@streams.reports}
+  row_click={fn {_id, report} -> JS.navigate(~p"/reports/#{report}") end}
+>
+  <:col :let={{_id, report}} label="Date"><%= report.date %></:col>
+  <:col :let={{_id, report}} label="Count"><%= report.count %></:col>
+  <:col :let={{_id, report}} label="Site"><%= report.site.name %></:col>
+  <:col :let={{_id, report}} label="Lot"><%= report.lot.lot_number <> " - " <> report.lot.reagent %></:col>
+  <:action :let={{_id, report}}>
+    <div class="sr-only">
+      <.link navigate={~p"/reports/#{report}"}>Show</.link>
+    </div>
+    <.link patch={~p"/reports/#{report}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, report}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: report.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="report-modal" show on_cancel={JS.patch(~p"/reports")}>
+  <.live_component
+    module={ReagentAgentWeb.ReportLive.FormComponent}
+    id={@report.id || :new}
+    title={@page_title}
+    action={@live_action}
+    report={@report}
+    patch={~p"/reports"}
+  />
+</.modal>
