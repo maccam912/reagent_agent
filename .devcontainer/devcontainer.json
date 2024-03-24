@@ -1,0 +1,6 @@
+{
+  "image": "elixir",
+  "name": "reagent-agent",
+  "onCreateCommand": "elixir --version",
+  "forwardPorts": [4000]
+}
