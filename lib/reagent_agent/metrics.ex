@@ -7,6 +7,7 @@ defmodule ReagentAgent.Metrics do
 
     if report do
       transfers = Transfers.get_transfers_after_date(lot_id, report.date)
+      orders = Orders.get_orders_in_range(site_id, lot_id, {report.date, Date.utc_today()})
 
       Enum.reduce(transfers, report.count, fn transfer, acc ->
         cond do
@@ -15,56 +16,59 @@ defmodule ReagentAgent.Metrics do
           true -> acc
         end
       end)
+      |> (fn acc ->
+        Enum.reduce(orders, acc, fn order, acc_inner -> acc_inner + order.count end)
+      end).()
     else
       0
     end
   end
 
-  def calculate_average_usage(site_id, lot_id) do
-    # Calculate the date range from two years ago to today
-    today = Date.utc_today()
-    tomorrow = Date.add(today, 1) # Placeholder for tomorrow
-    two_years_ago = Date.add(today, -730) # Approximation, considering a year as 365 days
-
-    # Fetch orders and transfers within the specified date range
-    orders = Orders.get_orders_in_range(site_id, lot_id, {two_years_ago, today})
-    transfers = Transfers.get_transfers_in_range(site_id, lot_id, {two_years_ago, today})
-
-    # Assuming orders are sorted by date, get the date of the first order
-    first_order_date = if Enum.empty?(orders), do: tomorrow, else: Enum.at(orders, 0).date
-
-    # Calculate prorated total boxes on the date of the first order
-    prorated_total_boxes = Enum.reduce(orders, 0, fn order, acc -> acc + order.count end) +
-      Enum.reduce(transfers, 0, fn transfer, acc ->
-        cond do
-          transfer.to_id == site_id and transfer.date >= first_order_date -> acc + transfer.count
-          transfer.from_id == site_id and transfer.date >= first_order_date -> acc - transfer.count
-          true -> acc
-        end
-      end)
-
-    # Get the most recent report
+  def calculate_usage_before_report(lot_id, site_id) do
     most_recent_report = Reports.get_most_recent_report(lot_id, site_id)
-
-    # Calculate total boxes used
-    total_boxes_used = if most_recent_report do
-      most_recent_report.count - prorated_total_boxes
+    if most_recent_report do
+      day_before_report = Date.add(most_recent_report.date, -1)
+      orders_sum = dbg(Orders.get_orders_in_range(site_id, lot_id, {~D[1970-01-01], day_before_report})
+                  |> Enum.reduce(0, fn order, acc -> acc + order.count end))
+      transfers_sum = dbg(Transfers.get_transfers_in_range(site_id, lot_id, {~D[1970-01-01], day_before_report})
+                      |> Enum.reduce(0, fn transfer, acc ->
+                        cond do
+                          transfer.to_id == site_id -> acc + transfer.count
+                          transfer.from_id == site_id -> acc - transfer.count
+                          true -> acc
+                        end
+                      end))
+      usage_before_report = (orders_sum + transfers_sum) - most_recent_report.count
+      {:ok, usage_before_report}
     else
-      0 - prorated_total_boxes
+      {:error, :no_report_found}
     end
+  end
 
-    # Calculate the number of days between the first order and the most recent report or today if no report exists
-    num_days = if most_recent_report do
-      Date.diff(most_recent_report.date, first_order_date) + 1
-    else
-      Date.diff(today, first_order_date) + 1
+  def calculate_average_usage(site_id, lot_id) do
+    case calculate_usage_before_report(lot_id, site_id) do
+      {:ok, usage_before_report} ->
+        earliest_order_date = Orders.get_earliest_order_date(site_id, lot_id)
+        earliest_transfer_date = Transfers.get_earliest_transfer_date(site_id, lot_id)
+        most_recent_report = Reports.get_most_recent_report(lot_id, site_id)
+
+        start_date = case {earliest_order_date, earliest_transfer_date} do
+          {{:ok, order_date}, {:ok, transfer_date}} -> Enum.min([order_date, transfer_date])
+          {{:ok, order_date}, {:error, :no_transfers_found}} -> order_date
+          {{:error, :no_orders_found}, {:ok, transfer_date}} -> transfer_date
+          _ -> Date.utc_today() # Fallback if both are not found
+        end
+
+        num_days = if most_recent_report do
+          Date.diff(most_recent_report.date, start_date) + 1
+        else
+          1 # Fallback to prevent division by zero
+        end
+
+        average_usage_per_day = usage_before_report / num_days
+        {:ok, average_usage_per_day}
+      {:error, :no_report_found} -> {:error, :no_report_found}
     end
-    num_days = max(num_days, 1) # Ensure num_days is at least 1
-
-    # Calculate number of boxes used per day
-    average_usage_per_day = total_boxes_used / num_days
-
-    -average_usage_per_day
   end
 
 end

@@ -14,7 +14,21 @@ defmodule ReagentAgentWeb.MetricsLive.Index do
 
     counts = for site <- sites, lot <- lots, into: %{} do
       remaining_boxes = Metrics.calculate_remaining_boxes(lot.id, site.id)
-      average_usage_per_day = Metrics.calculate_average_usage(site.id, lot.id)
+
+      # Calculate average usage per day
+      average_usage_result = Metrics.calculate_average_usage(site.id, lot.id)
+      average_usage_per_day = case average_usage_result do
+        {:ok, average} -> average
+        _ -> 0.0 # Handle error or no report found
+      end
+
+      # Calculate total usage before the most recent report
+      total_usage_result = Metrics.calculate_usage_before_report(lot.id, site.id)
+      total_usage = case total_usage_result do
+        {:ok, total} -> total
+        _ -> 0.0 # Handle error or no report found
+      end
+
       next_order_result = Orders.get_next_order_date(site.id, lot.id)
 
       # Ensure remaining_boxes and average_usage_per_day are numbers and average_usage_per_day is not zero
@@ -37,6 +51,7 @@ defmodule ReagentAgentWeb.MetricsLive.Index do
       { {site.id, lot.id}, %{
           remaining_boxes: remaining_boxes,
           average_usage_per_day: average_usage_per_day,
+          total_usage: total_usage, # Include total usage
           days_left: days_left,
           next_order_date: next_order_date,
           days_until_next_order: days_until_next_order

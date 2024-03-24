@@ -38,6 +38,30 @@
   </tbody>
 </table>
 
+<!-- Total Usage So Far -->
+<h2 class="text-lg leading-6 font-medium text-gray-900">Total Usage So Far</h2>
+<table class="min-w-full divide-y divide-gray-200 mt-4">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+      <%= for site <- @sites do %>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= site.name %></th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <%= for lot <- @lots do %>
+      <tr>
+        <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= lot.reagent <> " - " <> lot.lot_number %></td>
+        <%= for site <- @sites do %>
+          <% total_usage = Map.get(@counts, {site.id, lot.id}, %{})[:total_usage] || 0 %>
+          <td class="px-6 py-4 whitespace-nowrap"><%= total_usage %></td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
 <!-- Usage Per Day -->
 <h2 class="text-lg leading-6 font-medium text-gray-900">Usage Per Day</h2>
 <table class="min-w-full divide-y divide-gray-200 mt-4">
@@ -54,7 +78,7 @@
       <tr>
         <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><%= lot.reagent <> " - " <> lot.lot_number %></td>
         <%= for site <- @sites do %>
-          <% usage_per_day = Map.get(@counts, {site.id, lot.id}, %{})[:average_usage_per_day] || 0 %>
+          <% usage_per_day = Map.get(@counts, {site.id, lot.id}, %{})[:average_usage_per_day] || 0.0 %>
           <td class="px-6 py-4 whitespace-nowrap"><%= Float.round(usage_per_day, 2) %></td>
         <% end %>
       </tr>

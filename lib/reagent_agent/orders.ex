@@ -174,4 +174,34 @@ defmodule ReagentAgent.Orders do
       order -> {:ok, order.date}
     end
   end
+
+  @doc """
+  Finds the earliest order date for a given site and lot.
+
+  ## Parameters
+
+  - site_id: The ID of the site.
+  - lot_id: The ID of the lot.
+
+  ## Examples
+
+      iex> get_earliest_order_date(1, 2)
+      {:ok, ~D[2023-01-01]}
+
+      iex> get_earliest_order_date(3, 4)
+      {:error, :no_orders_found}
+
+  """
+  def get_earliest_order_date(site_id, lot_id) do
+    query = from o in Order,
+             where: o.site_id == ^site_id and o.lot_id == ^lot_id,
+             order_by: [asc: o.date],
+             limit: 1
+
+    Repo.one(query)
+    |> case do
+      nil -> {:error, :no_orders_found}
+      order -> {:ok, order.date}
+    end
+  end
 end
